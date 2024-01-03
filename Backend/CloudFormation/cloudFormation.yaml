@@ -1,0 +1,351 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Resources: 
+  events:
+    Type: AWS::DynamoDB::Table
+    Properties: 
+      AttributeDefinitions: 
+        - 
+          AttributeName: "eventId"
+          AttributeType: "S"
+      BillingMode: PROVISIONED
+      DeletionProtectionEnabled: false
+      KeySchema: 
+        - 
+          AttributeName: "eventId"
+          KeyType: "HASH"
+      ProvisionedThroughput:
+        ReadCapacityUnits: "5"
+        WriteCapacityUnits: "5"
+      TableName: "events"
+      TableClass: STANDARD
+
+  users:
+    Type: AWS::DynamoDB::Table
+    Properties: 
+      AttributeDefinitions: 
+        - 
+          AttributeName: "emailId"
+          AttributeType: "S"
+      BillingMode: PROVISIONED
+      DeletionProtectionEnabled: false
+      KeySchema: 
+        - 
+          AttributeName: "emailId"
+          KeyType: "HASH"
+      ProvisionedThroughput:
+        ReadCapacityUnits: "5"
+        WriteCapacityUnits: "5"
+      TableName: "users"
+      TableClass: STANDARD
+
+    
+  signUpEventAppCF:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code: 
+        S3Bucket: termassignmentlambdasbhargav
+        S3Key: signUpEventAppCF.zip
+      FunctionName: signUpEventAppCF
+      Handler: index.handler
+      Role: //arn of role
+      Runtime: nodejs16.x
+      Timeout: 900
+  
+  getAllEventsCF:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code: 
+        S3Bucket: termassignmentlambdasbhargav
+        S3Key: getAllEventsCF.zip
+      FunctionName: getAllEventsCF
+      Handler: index.handler
+      Role: //arn of role
+      Runtime: nodejs16.x
+      Timeout: 900
+  
+  logInEventAppCF:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code: 
+        S3Bucket: termassignmentlambdasbhargav
+        S3Key: logInEventAppCF.zip
+      FunctionName: logInEventAppCF
+      Handler: index.handler
+      Role: //arn of role
+      Runtime: nodejs16.x
+      Timeout: 900
+  
+  createEventCF:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code: 
+        S3Bucket: termassignmentlambdasbhargav
+        S3Key: createEventCF.zip
+      FunctionName: createEventCF
+      Handler: index.handler
+      Role: //arn of role
+      Runtime: nodejs16.x
+      Timeout: 900
+
+  getEventbyIdCF:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code: 
+        S3Bucket: termassignmentlambdasbhargav
+        S3Key: getEventbyIdCF.zip
+      FunctionName: getEventbyIdCF
+      Handler: index.handler
+      Role: //arn of role
+      Runtime: nodejs16.x
+      Timeout: 900
+
+  registerForEventCF:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code: 
+        S3Bucket: termassignmentlambdasbhargav
+        S3Key: registerForEventCF.zip
+      FunctionName: registerForEventCF
+      Handler: index.handler
+      Role: //arn of role
+      Runtime: nodejs16.x
+      Timeout: 900
+
+  
+  eventNotificationCF:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code: 
+        S3Bucket: termassignmentlambdasbhargav
+        S3Key: eventNotificationCF.zip
+      FunctionName: eventNotificationCF
+      Handler: index.handler
+      Role: //arn of role
+      Runtime: nodejs16.x
+      Timeout: 900
+  
+  signUpLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref signUpEventAppCF
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+  
+  logInLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref logInEventAppCF
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+  
+  createEventLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref createEventCF
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+  
+  getAllEventsLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref getAllEventsCF
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+
+  getEventbyLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref getEventbyIdCF
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+  
+  registerForEventLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref registerForEventCF
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+  
+  eventNotificationLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref eventNotificationCF
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+
+  ApiGateway:
+    Type: AWS::ApiGatewayV2::Api
+    Properties:
+      Name: API Gateway for Event App
+      ProtocolType: HTTP
+      CorsConfiguration:
+        AllowMethods:
+          - "*"
+        AllowOrigins:
+          - "*"
+        AllowHeaders:
+          - "*"
+  
+  APIGatewayStage:
+    Type: AWS::ApiGatewayV2::Stage
+    Properties:
+      ApiId: !Ref ApiGateway
+      StageName: dev
+      Description: Deploy Stage
+      AutoDeploy: true
+
+
+  APIGatewayIntegrationWithSignupLambda:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref ApiGateway
+      Description: Lambda Integration
+      IntegrationType: AWS_PROXY
+      IntegrationMethod: POST
+      PayloadFormatVersion: "2.0"
+      IntegrationUri: !Sub 'arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${signUpEventAppCF.Arn}/invocations'
+  
+  APIGatewayIntegrationWithLogInLambda:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref ApiGateway
+      Description: Lambda Integration
+      IntegrationType: AWS_PROXY
+      IntegrationMethod: POST
+      PayloadFormatVersion: "2.0"
+      IntegrationUri: !Sub 'arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${logInEventAppCF.Arn}/invocations'
+
+  APIGatewayIntegrationWithGetAllEventsLambda:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref ApiGateway
+      Description: Lambda Integration
+      IntegrationType: AWS_PROXY
+      IntegrationMethod: POST
+      PayloadFormatVersion: "2.0"
+      IntegrationUri: !Sub 'arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${getAllEventsCF.Arn}/invocations'
+  
+  APIGatewayIntegrationWithGetEventbyIdLambda:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref ApiGateway
+      Description: Lambda Integration
+      IntegrationType: AWS_PROXY
+      IntegrationMethod: POST
+      PayloadFormatVersion: "2.0"
+      IntegrationUri: !Sub 'arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${getEventbyIdCF.Arn}/invocations'
+
+  APIGatewayIntegrationWithCreateEventLambda:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref ApiGateway
+      Description: Lambda Integration
+      IntegrationType: AWS_PROXY
+      IntegrationMethod: POST
+      PayloadFormatVersion: "2.0"
+      IntegrationUri: !Sub 'arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${createEventCF.Arn}/invocations'
+
+  APIGatewayIntegrationWithRegisterForEventLambda:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref ApiGateway
+      Description: Lambda Integration
+      IntegrationType: AWS_PROXY
+      IntegrationMethod: POST
+      PayloadFormatVersion: "2.0"
+      IntegrationUri: !Sub 'arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${registerForEventCF.Arn}/invocations'
+
+  APIGatewayRouteSignUp:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref ApiGateway
+      RouteKey: "POST /signup"
+      AuthorizationType: NONE
+      Target: !Join
+        - /
+        - - integrations
+          - !Ref APIGatewayIntegrationWithSignupLambda
+  
+  APIGatewayRouteLogIn:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref ApiGateway
+      RouteKey: "POST /login"
+      AuthorizationType: NONE
+      Target: !Join
+        - /
+        - - integrations
+          - !Ref APIGatewayIntegrationWithLogInLambda
+  
+  APIGatewayRouteCreateEvent:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref ApiGateway
+      RouteKey: "POST /create-event"
+      AuthorizationType: NONE
+      Target: !Join
+        - /
+        - - integrations
+          - !Ref APIGatewayIntegrationWithCreateEventLambda
+  
+  APIGatewayRouteGetAllEvents:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref ApiGateway
+      RouteKey: "GET /get-all"
+      AuthorizationType: NONE
+      Target: !Join
+        - /
+        - - integrations
+          - !Ref APIGatewayIntegrationWithGetAllEventsLambda
+  
+  APIGatewayRouteGetEventbyId:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref ApiGateway
+      RouteKey: "GET /get-event"
+      AuthorizationType: NONE
+      Target: !Join
+        - /
+        - - integrations
+          - !Ref APIGatewayIntegrationWithGetEventbyIdLambda
+  
+  APIGatewayRouteRegisterForEvent:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref ApiGateway
+      RouteKey: "POST /register-event"
+      AuthorizationType: NONE
+      Target: !Join
+        - /
+        - - integrations
+          - !Ref APIGatewayIntegrationWithRegisterForEventLambda
+  
+  SecretManagerForCredentials:  
+    Type: AWS::SecretsManager::Secret
+    Properties: 
+      Description: To store email and password
+      Name: mySecretCredentials
+      SecretString: '{"email":"<email>","password":"<password>"}'
+
+  eventNotificationsQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: eventNotificationsQueue
+      VisibilityTimeout: 900
+
+  LambdaFunctionEventSourceMapping:
+    Type: AWS::Lambda::EventSourceMapping
+    Properties:
+      BatchSize: 10
+      Enabled: true
+      EventSourceArn: !GetAtt eventNotificationsQueue.Arn
+      FunctionName: !GetAtt eventNotificationCF.Arn
+
+  SNSTopic:
+    Type: AWS::SNS::Topic
+    Properties: 
+      DisplayName: Topic For Subscribers
+      FifoTopic: false
+      TopicName: eventNotificationSNS

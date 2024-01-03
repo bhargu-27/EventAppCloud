@@ -1,0 +1,39 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Resources:
+  KeyPairCloud:
+    Type: AWS::EC2::KeyPair
+    Properties:
+      KeyName: key-pair
+  MyInstance:
+    Type: "AWS::EC2::Instance"
+    Properties:
+      InstanceType: "t2.medium"
+      ImageId: "ami-0230bd60aa48260c6"
+      KeyName: !Ref KeyPairCloud
+      SecurityGroupIds:
+        - !Ref MySecurityGroup
+      UserData:
+        "Fn::Base64": !Sub |
+          #!/bin/bash -xe 
+          source /etc/environment
+          sudo yum update -y
+          sudo yum install -y git
+          sudo yum install -y nodejs
+          git clone https://github.com/bhargu-27/eventapp.git 
+          cd eventapp
+          sudo npm install
+          sudo npm start
+  MySecurityGroup:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      GroupDescription: "Enable all traffic"
+      SecurityGroupIngress:
+        - IpProtocol: "-1"
+          FromPort: 0
+          ToPort: 65535
+          CidrIp: "0.0.0.0/0"
+        - IpProtocol: "-1"
+          FromPort: 0
+          ToPort: 65535
+          CidrIpv6: "::/0"
